@@ -1,7 +1,0 @@
-[package]
-name = "poki"
-version = "0.1.0"
-authors = ["Lukas Kalbertodt <lukas.kalbertodt@gmail.com>"]
-
-[dependencies]
-term-painter = "0.2"
