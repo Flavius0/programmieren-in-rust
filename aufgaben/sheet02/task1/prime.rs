@@ -1,7 +1,27 @@
 //! Aufgabe 2.1: Primzahltest
 
 fn main() {
+    for i in 1..21 {
+        println!("{}{}", i, if is_prime(i) { "*" } else { "" })
+    }
+}
 
+fn is_prime(n: u32) -> bool {
+    if n <= 1 {
+        return false;
+    } else if n == 2 {
+        return true;
+    }
+
+    let f = n as f32;
+    let bound = f.sqrt().ceil() as u32;
+
+    for i in 2..bound + 1 {
+        if n % i == 0 {
+            return false;
+        }
+    }
+    true
 }
 
 #[test]

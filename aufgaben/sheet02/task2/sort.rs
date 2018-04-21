@@ -2,10 +2,20 @@ fn main() {
     let mut arr = [61, 21, 27, 79, 57, 60, 46, 42, 27, 92, 66, 26];
 
     sort(&mut arr);
-    // TODO: print `arr`
+    println!("{:?}", arr)
 }
 
-// TODO: write `sort()` function
+fn sort(arr: &mut [u64]) {
+    for first in 0..arr.len() {
+        let mut min_pos = first;
+        for i in first..arr.len() {
+            if arr[i] < arr[min_pos] {
+                min_pos = i;
+            }
+        }
+        arr.swap(first, min_pos)
+    }
+}
 
 
 #[test]
