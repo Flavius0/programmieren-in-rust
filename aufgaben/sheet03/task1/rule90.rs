@@ -1,7 +1,18 @@
 //! Task 3.1: Rule 90
 
 fn main() {
-    // TODO: Task 1c)
+    fn print_line(line: &[bool]) {
+        for b in line {
+            print!("{}", if *b { "█" } else { " " });
+        }
+        println!("");
+    }
+    let mut input = read_input();
+
+    for _ in 0..20 {
+        print_line( &input );
+        input = next_step( &input );
+    }
 }
 
 /// Reads a valid initial configuration for our automaton from the terminal.
@@ -37,15 +48,49 @@ fn read_input() -> Vec<bool> {
         buffer.trim().to_string()
     };
 
-    // TODO: Task 1a)
+    let mut res = Vec::new();
+    for c in input.chars() {
+        res.push(if c == '0' { false } else { true });
+    }
+    res
 }
 
-// TODO: Task 1b)
+fn next_step(line: &[bool]) -> Vec<bool> {
+    fn get_one(p: bool, c: bool, n: bool) -> bool {
+        if p && c && n {
+            return false;
+        } else if p && c && !n {
+            return true;
+        } else if p && !c && n {
+            return false;
+        } else if p && !c && !n {
+            return true;
+        } else if !p && c && n {
+            return true;
+        } else if !p && c && !n {
+            return false;
+        } else if !p && !c && n {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    let mut res = Vec::new();
+    for i in 0..line.len() {
+        res.push(get_one(
+            line[(line.len() + i - 1) % line.len()],
+            line[i],
+            line[(i + 1) % line.len()],
+        ));
+    }
+    res
+}
 
 #[test]
 fn rule90_rules() {
     assert_eq!(next_step(&[false, false, false]), vec![false, false, false]);
-    assert_eq!(next_step(&[ true, false, false]), vec![false,  true,  true]);
-    assert_eq!(next_step(&[ true,  true, false]), vec![ true,  true, false]);
-    assert_eq!(next_step(&[ true,  true,  true]), vec![false, false, false]);
+    assert_eq!(next_step(&[true, false, false]), vec![false, true, true]);
+    assert_eq!(next_step(&[true, true, false]), vec![true, true, false]);
+    assert_eq!(next_step(&[true, true, true]), vec![false, false, false]);
 }
