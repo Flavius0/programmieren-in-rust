@@ -1,17 +1,19 @@
 //! Task 3.1: Rule 90
 
+const NUM_ITERATIONS: u32 = 20;
+
 fn main() {
     fn print_line(line: &[bool]) {
-        for b in line {
-            print!("{}", if *b { "█" } else { " " });
+        for &b in line {
+            print!("{}", if b { "█" } else { " " });
         }
         println!("");
     }
     let mut input = read_input();
 
-    for _ in 0..20 {
-        print_line( &input );
-        input = next_step( &input );
+    for _ in 0..NUM_ITERATIONS {
+        print_line(&input);
+        input = next_step(&input);
     }
 }
 
@@ -48,41 +50,17 @@ fn read_input() -> Vec<bool> {
         buffer.trim().to_string()
     };
 
-    let mut res = Vec::new();
+    let mut res = Vec::with_capacity(input.len());
     for c in input.chars() {
-        res.push(if c == '0' { false } else { true });
+        res.push(c == '1');
     }
     res
 }
 
 fn next_step(line: &[bool]) -> Vec<bool> {
-    fn get_one(p: bool, c: bool, n: bool) -> bool {
-        if p && c && n {
-            return false;
-        } else if p && c && !n {
-            return true;
-        } else if p && !c && n {
-            return false;
-        } else if p && !c && !n {
-            return true;
-        } else if !p && c && n {
-            return true;
-        } else if !p && c && !n {
-            return false;
-        } else if !p && !c && n {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    let mut res = Vec::new();
+    let mut res = Vec::with_capacity(line.len());
     for i in 0..line.len() {
-        res.push(get_one(
-            line[(line.len() + i - 1) % line.len()],
-            line[i],
-            line[(i + 1) % line.len()],
-        ));
+        res.push(line[(line.len() + i - 1) % line.len()] ^ line[(i + 1) % line.len()]);
     }
     res
 }
