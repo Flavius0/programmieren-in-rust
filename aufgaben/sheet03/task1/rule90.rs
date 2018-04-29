@@ -1,7 +1,20 @@
 //! Task 3.1: Rule 90
 
+const NUM_ITERATIONS: u32 = 20;
+
 fn main() {
-    // TODO: Task 1c)
+    fn print_line(line: &[bool]) {
+        for &b in line {
+            print!("{}", if b { "█" } else { " " });
+        }
+        println!("");
+    }
+    let mut input = read_input();
+
+    for _ in 0..NUM_ITERATIONS {
+        print_line(&input);
+        input = next_step(&input);
+    }
 }
 
 /// Reads a valid initial configuration for our automaton from the terminal.
@@ -37,15 +50,25 @@ fn read_input() -> Vec<bool> {
         buffer.trim().to_string()
     };
 
-    // TODO: Task 1a)
+    let mut res = Vec::with_capacity(input.len());
+    for c in input.chars() {
+        res.push(c == '1');
+    }
+    res
 }
 
-// TODO: Task 1b)
+fn next_step(line: &[bool]) -> Vec<bool> {
+    let mut res = Vec::with_capacity(line.len());
+    for i in 0..line.len() {
+        res.push(line[(line.len() + i - 1) % line.len()] ^ line[(i + 1) % line.len()]);
+    }
+    res
+}
 
 #[test]
 fn rule90_rules() {
     assert_eq!(next_step(&[false, false, false]), vec![false, false, false]);
-    assert_eq!(next_step(&[ true, false, false]), vec![false,  true,  true]);
-    assert_eq!(next_step(&[ true,  true, false]), vec![ true,  true, false]);
-    assert_eq!(next_step(&[ true,  true,  true]), vec![false, false, false]);
+    assert_eq!(next_step(&[true, false, false]), vec![false, true, true]);
+    assert_eq!(next_step(&[true, true, false]), vec![true, true, false]);
+    assert_eq!(next_step(&[true, true, true]), vec![false, false, false]);
 }
