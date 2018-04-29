@@ -1,8 +1,18 @@
 //! Task 3.2: Pokemon
 
-fn main() {}
+fn main() {
+    let mut p1 = Player::create_player("Red");
+    let mut p2 = Player::create_player("Blue");
 
-
+    println!(
+        ">>>>> Status: {} has {} HP, {} has {} HP",
+        p1.pokemon.name(),
+        p1.pokemon.stats.hp,
+        p2.pokemon.name(),
+        p2.pokemon.stats.hp,
+    );
+    execute_battle(&mut p1, &mut p2);
+}
 
 /// Describes an attack with all its properties. This type is similar to
 /// `PokemonModel`, as there are finite many, immutable instances of this type
@@ -72,7 +82,6 @@ impl TypeEffectiveness {
     }
 }
 
-
 /// Types (sometimes called "elements") of the Pokemon universe. Each
 /// attack-move has exactly one type, Pokemons can have one or two types.
 #[derive(Debug, Clone, Copy)]
@@ -122,7 +131,7 @@ struct PokemonModel {
     /// of the Pokemon model, but of the Pokemon itself (as they change over
     /// time). A pokemon just has an abstract learnset of potential attacks.
     /// But this is easier for now.
-    attacks: &'static [&'static Attack]
+    attacks: &'static [&'static Attack],
 }
 
 /// Describes the basic stats of a Pokemon.
@@ -164,11 +173,7 @@ impl Stats {
             ((base as f64 * level as f64) / 50.0 + 5.0) as u16
         }
 
-        let hp = (
-            (base.hp as f64 * level as f64) / 50.0
-                + level as f64
-                + 10.0
-        ) as u16;
+        let hp = ((base.hp as f64 * level as f64) / 50.0 + level as f64 + 10.0) as u16;
 
         Stats {
             hp: hp,
@@ -177,6 +182,80 @@ impl Stats {
             special_attack: stat_formula(base.special_attack, level),
             defense: stat_formula(base.defense, level),
             special_defense: stat_formula(base.special_defense, level),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Pokemon {
+    model: &'static PokemonModel,
+    stats: Stats,
+    level: u8,
+}
+
+impl Pokemon {
+    fn with_level(model: &'static PokemonModel, level: u8) -> Self {
+        Pokemon {
+            model: model,
+            level: level,
+            stats: Stats::at_level(model.base_stats, level),
+        }
+    }
+
+    fn model(&self) -> &'static PokemonModel {
+        self.model
+    }
+
+    fn stats(&self) -> &Stats {
+        &self.stats
+    }
+
+    fn level(&self) -> u8 {
+        self.level
+    }
+
+    fn name(&self) -> &str {
+        self.model.name
+    }
+
+    fn endure_attack(&mut self, attacker: &Pokemon, attack: &Attack) {
+        let damage = attack_damage(attacker, self, *attack);
+        self.stats.hp = self.stats.hp.saturating_sub(damage);
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Player {
+    name: String,
+    pokemon: Pokemon,
+}
+
+impl Player {
+    fn create_player(name: &str) -> Self {
+        Player {
+            name: name.into(),
+            pokemon: Self::choose_pokemon(name),
+        }
+    }
+
+    fn choose_pokemon(name: &str) -> Pokemon {
+        loop {
+            println!(
+                "Player {}, please choose a Pokemon (or type '?' to get a complete list)",
+                name
+            );
+            let poke_name = read_string();
+            if poke_name == "?" {
+                print_pokemon_list();
+                continue;
+            }
+
+            let model = find_pokemon_by_name(poke_name);
+            if model.is_none() {
+                println!("Please choose an existing pokemon");
+            } else {
+                return Pokemon::with_level(model.unwrap(), 1);
+            }
         }
     }
 }
@@ -194,44 +273,35 @@ impl Stats {
 /// term quite a bit. The correct and complete formula can be found [here][1].
 ///
 /// [1]: http://bulbapedia.bulbagarden.net/wiki/Damage#Damage_formula
-// fn attack_damage(attacker: &Pokemon, defender: &Pokemon, attack: Attack) -> u16 {
-//     // Depending on the attack category, get the correct stats
-//     let (attack_mod, defense_mod) = match attack.category {
-//         AttackCategory::Physical => {
-//             (attacker.stats().attack, defender.stats().defense)
-//         }
-//         AttackCategory::Special => {
-//             (attacker.stats().special_attack, defender.stats().special_defense)
-//         }
-//     };
+fn attack_damage(attacker: &Pokemon, defender: &Pokemon, attack: Attack) -> u16 {
+    // Depending on the attack category, get the correct stats
+    let (attack_mod, defense_mod) = match attack.category {
+        AttackCategory::Physical => (attacker.stats().attack, defender.stats().defense),
+        AttackCategory::Special => (
+            attacker.stats().special_attack,
+            defender.stats().special_defense,
+        ),
+    };
 
-//     // Cast everything to f64 to reduce noise in actual formula
-//     let (attack_mod, defense_mod) = (attack_mod as f64, defense_mod as f64);
-//     let base_power = attack.base_power as f64;
-//     let attacker_level = attacker.level() as f64;
+    // Cast everything to f64 to reduce noise in actual formula
+    let (attack_mod, defense_mod) = (attack_mod as f64, defense_mod as f64);
+    let base_power = attack.base_power as f64;
+    let attacker_level = attacker.level() as f64;
 
-//     // The modifier only depends on the type effectiveness (in our simplified
-//     // version!).
-//     let modifier = match defender.model().type_ {
-//         PokemonType::One(ty) => {
-//             TypeEffectiveness::of_attack(attack.type_, ty).multiplier()
-//         }
-//         PokemonType::Two(ty_a, ty_b) => {
-//             TypeEffectiveness::of_attack(attack.type_, ty_a).multiplier()
-//                 * TypeEffectiveness::of_attack(attack.type_, ty_b).multiplier()
-//         }
-//     };
+    // The modifier only depends on the type effectiveness (in our simplified
+    // version!).
+    let modifier = match defender.model().type_ {
+        PokemonType::One(ty) => TypeEffectiveness::of_attack(attack.type_, ty).multiplier(),
+        PokemonType::Two(ty_a, ty_b) => {
+            TypeEffectiveness::of_attack(attack.type_, ty_a).multiplier()
+                * TypeEffectiveness::of_attack(attack.type_, ty_b).multiplier()
+        }
+    };
 
-//     // With every parameter prepared above, here is the formula
-//     (
-//         (
-//             ((2.0 * attacker_level + 10.0) / 250.0)
-//                 * (attack_mod / defense_mod)
-//                 * base_power
-//                 + 2.0
-//         ) * modifier
-//     ) as u16
-// }
+    // With every parameter prepared above, here is the formula
+    ((((2.0 * attacker_level + 10.0) / 250.0) * (attack_mod / defense_mod) * base_power + 2.0)
+        * modifier) as u16
+}
 
 // ===========================================================================
 // ===========================================================================
@@ -410,8 +480,75 @@ const VINE_WHIP: &'static Attack = &ATTACK_DB[1];
 const EMBER: &'static Attack = &ATTACK_DB[2];
 const WATER_GUN: &'static Attack = &ATTACK_DB[3];
 
+// ===========================================================================
+// Function Definitions
+// ===========================================================================
 
+fn print_pokemon_list() {
+    for &p in POKEDEX {
+        println!("#{:03} {}", p.id, p.name);
+    }
+}
 
+fn find_pokemon_by_name(name: String) -> Option<&'static PokemonModel> {
+    let t = name.to_lowercase();
+    for p in POKEDEX {
+        if p.name.to_lowercase() == t {
+            return Some(p);
+        }
+    }
+    return None;
+}
+
+fn get_attack_by_uid(pokemon: &Pokemon) -> &Attack {
+    let attacks = pokemon.model.attacks;
+    for (i, attack) in attacks.iter().enumerate() {
+        println!("    {}: {}", i, attack.name);
+    }
+    loop {
+        println!("    !!! Please give me the attack ID:");
+        let attack_id = read_usize();
+        if attack_id < attacks.len() {
+            return attacks[attack_id];
+        }
+    }
+}
+
+fn execute_battle(p1: &mut Player, p2: &mut Player) {
+    let attacker;
+    let defender;
+
+    if p1.pokemon.stats.speed >= p2.pokemon.stats.speed {
+        attacker = p1;
+        defender = p2;
+    } else {
+        attacker = p2;
+        defender = p1;
+    }
+
+    loop {
+        println!(
+            ">>>>> {} is about to attack! Which move shall it execute?",
+            attacker.pokemon.name()
+        );
+        {
+            let attack = get_attack_by_uid(&attacker.pokemon);
+            defender.pokemon.endure_attack(&attacker.pokemon, attack);
+            println!(
+                ">>>>> {} uses {}! ({} has {} HP left)",
+                attacker.pokemon.name(),
+                attack.name,
+                defender.pokemon.name(),
+                defender.pokemon.stats.hp,
+            );
+        }
+        if defender.pokemon.stats.hp == 0 {
+            println!(">>>>> {} fainted!", defender.pokemon.name());
+            break;
+        }
+        std::mem::swap(attacker, defender);
+    }
+}
 
 // ===========================================================================
 // ===========================================================================
