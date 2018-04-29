@@ -7,9 +7,9 @@ fn main() {
     println!(
         ">>>>> Status: {} has {} HP, {} has {} HP",
         p1.pokemon.name(),
-        p1.pokemon.stats.hp,
+        p1.pokemon.stats().hp,
         p2.pokemon.name(),
-        p2.pokemon.stats.hp,
+        p2.pokemon.stats().hp,
     );
     execute_battle(&mut p1, &mut p2);
 }
@@ -220,7 +220,7 @@ impl Pokemon {
 
     fn endure_attack(&mut self, attacker: &Pokemon, attack: &Attack) {
         let damage = attack_damage(attacker, self, *attack);
-        self.stats.hp = self.stats.hp.saturating_sub(damage);
+        self.stats.hp = self.stats().hp.saturating_sub(damage);
     }
 }
 
@@ -254,7 +254,7 @@ impl Player {
             if model.is_none() {
                 println!("Please choose an existing pokemon");
             } else {
-                return Pokemon::with_level(model.unwrap(), 1);
+                return Pokemon::with_level(model.unwrap(), 5);
             }
         }
     }
@@ -501,7 +501,7 @@ fn find_pokemon_by_name(name: String) -> Option<&'static PokemonModel> {
 }
 
 fn get_attack_by_uid(pokemon: &Pokemon) -> &Attack {
-    let attacks = pokemon.model.attacks;
+    let attacks = pokemon.model().attacks;
     for (i, attack) in attacks.iter().enumerate() {
         println!("    {}: {}", i, attack.name);
     }
@@ -518,7 +518,7 @@ fn execute_battle(p1: &mut Player, p2: &mut Player) {
     let attacker;
     let defender;
 
-    if p1.pokemon.stats.speed >= p2.pokemon.stats.speed {
+    if p1.pokemon.stats().speed >= p2.pokemon.stats().speed {
         attacker = p1;
         defender = p2;
     } else {
@@ -539,10 +539,10 @@ fn execute_battle(p1: &mut Player, p2: &mut Player) {
                 attacker.pokemon.name(),
                 attack.name,
                 defender.pokemon.name(),
-                defender.pokemon.stats.hp,
+                defender.pokemon.stats().hp,
             );
         }
-        if defender.pokemon.stats.hp == 0 {
+        if defender.pokemon.stats().hp == 0 {
             println!(">>>>> {} fainted!", defender.pokemon.name());
             break;
         }
