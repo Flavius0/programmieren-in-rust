@@ -250,11 +250,10 @@ impl Player {
                 continue;
             }
 
-            let model = find_pokemon_by_name(poke_name);
-            if model.is_none() {
-                println!("Please choose an existing pokemon");
-            } else {
-                return Pokemon::with_level(model.unwrap(), 5);
+            let o_model = find_pokemon_by_name(poke_name);
+            match o_model {
+                None => println!("Please choose an existing pokemon"),
+                Some(model) => return Pokemon::with_level(model, 5),
             }
         }
     }
