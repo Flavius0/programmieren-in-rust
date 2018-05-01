@@ -222,6 +222,10 @@ impl Pokemon {
         let damage = attack_damage(attacker, self, *attack);
         self.stats.hp = self.stats().hp.saturating_sub(damage);
     }
+
+    fn is_alive(&self) -> bool {
+        self.stats.hp > 0
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -541,7 +545,7 @@ fn execute_battle(p1: &mut Player, p2: &mut Player) {
                 defender.pokemon.stats().hp,
             );
         }
-        if defender.pokemon.stats().hp == 0 {
+        if !defender.pokemon.is_alive() {
             println!(">>>>> {} fainted!", defender.pokemon.name());
             break;
         }
