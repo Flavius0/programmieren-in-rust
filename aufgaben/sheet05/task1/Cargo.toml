@@ -1,0 +1,7 @@
+[package]
+name = "poki"
+version = "0.1.0"
+authors = ["Fabian Brosda <f.brosda@gmx.de>"]
+
+[dependencies]
+term-painter = "0.2.4"
