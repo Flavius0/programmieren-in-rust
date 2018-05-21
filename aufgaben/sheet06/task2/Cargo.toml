@@ -1,0 +1,7 @@
+[package]
+name = "task2"
+version = "0.1.0"
+authors = ["Fabian Brosda <f.brosda@gmx.de>"]
+
+[dependencies]
+num-traits = "0.2"
